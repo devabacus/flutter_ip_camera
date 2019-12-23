@@ -27,6 +27,7 @@ class _MyAppState extends State<MyApp> {
   var camerAnswer5;
   var url1 = "http://192.168.88.32:10080";
   var url2 = "http://192.168.88.15:8899";
+  var url3 = "http://192.168.1.102:10080";
 
   String soapHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
       "<soap:Envelope " +
@@ -48,12 +49,12 @@ class _MyAppState extends State<MyApp> {
       "<GetProfiles xmlns=\"http://www.onvif.org/ver10/media/wsdl\"/>";
   String snapshotUri =
       "<GetSnapshotUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">"
-          + "<ProfileToken>" + "000" + "</ProfileToken>"
+          + "<ProfileToken>" + "PROFILE_000" + "</ProfileToken>"
           + "</GetSnapshotUri>";
 
   String streamUri =
       "<GetStreamUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">"
-          + "<ProfileToken>" + "001" + "</ProfileToken>"
+          + "<ProfileToken>" + "PROFILE_000" + "</ProfileToken>"
           + "<Protocol>RTSP</Protocol>"
           + "</GetStreamUri>";
 
@@ -61,7 +62,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    _httpRequest(url1);
+    _httpRequest(url3);
   }
 
 
@@ -83,42 +84,42 @@ class _MyAppState extends State<MyApp> {
     var response3;
     var response4;
     var response5;
-//    var response1 = await http.post(url, headers: {"Content-Type":"text/xml"}, body: body1);
-//    setState(() {
-//      camerAnswer1 = _regexParser(response1.body);
-//
-//    });
-//    print("Response status: ${response1.statusCode}, Response body: ${response1.body}");
-//    if(response1.statusCode == 200){
-//      print(body2);
-//
-//      response2 = await http.post(url, headers: {"Content-Type":"text/xml; charset=utf-8"}, body: body2);
-//      setState(() {
-//        camerAnswer2 = _regexParser(response2.body);
-//      });
-//    }
-//    if(response2.statusCode == 200){
-//      print(body3);
-//      response3 = await http.post(url, body: body3);
-//      setState(() {
-//        camerAnswer3 = _regexParser(response3.body);
-//      });
-//    }
-//
-//    if(response3.statusCode == 200){
+    var response1 = await http.post(url, headers: {"Content-Type":"text/xml"}, body: body1);
+    setState(() {
+      camerAnswer1 = (response1.body);
+
+    });
+    print("Response status: ${response1.statusCode}, Response body: ${response1.body}");
+    if(response1.statusCode == 200){
+      print(body2);
+
+      response2 = await http.post(url, headers: {"Content-Type":"text/xml; charset=utf-8"}, body: body2);
+      setState(() {
+        camerAnswer2 = (response2.body);
+      });
+    }
+    if(response2.statusCode == 200){
+      print(body3);
+      response3 = await http.post(url, body: body3);
+      setState(() {
+        camerAnswer3 = (response3.body);
+      });
+    }
+
+    if(response3.statusCode == 200){
       print(body4);
       response4 = await http.post(url, body: body4);
       setState(() {
         camerAnswer4 = response4.body;
       });
-//
-//    }
 
-//      print(body5);
-//      response5 = await http.post(url, body: body5);
-//      setState(() {
-//        camerAnswer5 = response5.body;
-//      });
+    }
+
+      print(body5);
+      response5 = await http.post(url, body: body5);
+      setState(() {
+        camerAnswer5 = response5.body;
+      });
 
   }
 
@@ -133,15 +134,15 @@ class _MyAppState extends State<MyApp> {
         ),
 //        body: SingleChildScrollView(child: Text(camerAnswer.toString())),
       body: ListView(children: <Widget>[
-//        Text(camerAnswer1.toString()),
-//        SizedBox(height: 30,),
-//        Text(camerAnswer2.toString()),
-//        SizedBox(height: 30,),
-//        Text(camerAnswer3.toString()),
-//        SizedBox(height: 30,),
+        Text(camerAnswer1.toString()),
+        SizedBox(height: 30,),
+        Text(camerAnswer2.toString()),
+        SizedBox(height: 30,),
+        Text(camerAnswer3.toString()),
+        SizedBox(height: 30,),
         Text(camerAnswer4.toString()),
-//        SizedBox(height: 30,),
-//        Text(camerAnswer5.toString())
+        SizedBox(height: 30,),
+        Text(camerAnswer5.toString())
       ],),
       ),
     );
