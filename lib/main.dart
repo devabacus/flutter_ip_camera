@@ -3,6 +3,13 @@ import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 
+enum OnvifCommand {
+  GetServices,
+  GetDeviceInformation,
+  GetProfiles,
+  GetStreamURI
+}
+
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
@@ -12,6 +19,12 @@ class _MyAppState extends State<MyApp> {
   String ipAddressCam1 = "192.168.88.32:10080";
   String ipAddressCam2 = "192.168.88.15:8899";
   String user = "admin";
+  OnvifCommand state;
+  var camerAnswer1;
+  var camerAnswer2;
+  var camerAnswer3;
+  var url1 = "http://192.168.88.32:10080";
+  var url2 = "http://192.168.88.15:8899";
 
   String soapHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
       "<soap:Envelope " +
@@ -25,20 +38,61 @@ class _MyAppState extends State<MyApp> {
           "<IncludeCapability>false</IncludeCapability>" +
           "</GetServices>";
 
-  String envelopEnd = "</soap:Body></soap:Envelope>";
+  String deviceInfoCommand =
+      "<GetDeviceInformation xmlns=\"http://www.onvif.org/ver10/device/wsdl\">" +
+          "</GetDeviceInformation>";
 
+  String profileCommand =
+      "<GetProfiles xmlns=\"http://www.onvif.org/ver10/media/wsdl\"/>";
+
+  String streamUri =
+      "<GetStreamUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">"
+          + "<ProfileToken>" +  "</ProfileToken>"
+          + "<Protocol>RTSP</Protocol>"
+          + "</GetStreamUri>";
+
+  String envelopEnd = "</soap:Body></soap:Envelope>";
 
   @override
   void initState() {
-    _httpRequest();
+    _httpRequest(url2);
   }
+
+
+  String _regexParser(String msg){
+    RegExp regExp = RegExp(r".*<SOAP-ENV:Body>(.*)");
+    var parsedMsg = regExp.firstMatch(msg).group(1);
+    return parsedMsg;
+  }
+
 //  headers: {"content-Type": "text/xml; charset=utf-8"}
-  _httpRequest() async {
-    var url = "http://$ipAddressCam2";
+  _httpRequest(String url) async {
     String body1 = soapHeader + servicesCommand + envelopEnd;
+    String body2 = soapHeader + deviceInfoCommand + envelopEnd;
+    String body3 = soapHeader + profileCommand + envelopEnd;
     print(body1);
-    var response = await http.post(url, body: body1);
-    print("Response status: ${response.statusCode}, Response body: ${response.body}");
+    var response2;
+    var response1 = await http.post(url, headers: {"Content-Type":"text/xml"}, body: body1);
+    setState(() {
+      camerAnswer1 = _regexParser(response1.body);
+
+    });
+    print("Response status: ${response1.statusCode}, Response body: ${response1.body}");
+    if(response1.statusCode == 200){
+      print(body2);
+
+      response2 = await http.post(url, headers: {"Content-Type":"text/xml; charset=utf-8"}, body: body2);
+      setState(() {
+        camerAnswer2 = _regexParser(response2.body);
+      });
+    }
+    if(response2.statusCode == 200){
+      print(body3);
+      var response3 = await http.post(url, body: body3);
+      setState(() {
+        camerAnswer3 = _regexParser(response3.body);
+      });
+    }
   }
 
   @override
@@ -50,6 +104,14 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: Text("Ip camera"),
         ),
+//        body: SingleChildScrollView(child: Text(camerAnswer.toString())),
+      body: ListView(children: <Widget>[
+        Text(camerAnswer1.toString()),
+        SizedBox(height: 30,),
+        Text(camerAnswer2.toString()),
+        SizedBox(height: 30,),
+        Text(camerAnswer3.toString())
+      ],),
       ),
     );
   }
