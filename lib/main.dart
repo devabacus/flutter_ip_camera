@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
       '<v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
       '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
 
-  String officeGetSnapshotUriAuth;
+  String mGetSnapshotUriAuth;
 
 
   String otherOfficeCamera = '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
@@ -110,39 +110,17 @@ class _MyAppState extends State<MyApp> {
     mCreated = DateTime.now().toIso8601String().split('.')[0] + 'Z';
      mNonce = base64Encode(utf8.encode("1234567890"));
     String password = '123QWEasdZXC';
-    //home credentials
-    String onvifCreated = '2019-12-23T14:11:08Z';
-    String onvifNonce = 'MTYyYTRmMzExYjBhMDE3Nw==';
-    String onvifPass = '8mdx0yoK22pKuN2NggG945oJZdA=';
-     //office credentials
-//    String onvifCreated = '2019-12-25T07:55:35.000Z';
-//    String onvifNonce = 'Njg2YzYxZDI4YjA4ZDA0Nw==';
-//    String onvifPass = 'x8IytKlr8cTH+sT9EzEaVDLqYGw=';
-    Digest newDigest = md5.convert([]);
-//    Digest mOnvifDigest = sha1.convert(utf8.encode(onvifCreated + onvifNonce + '123QWEasdZXC'));
-    Digest mOnvifDigest = sha1.convert(utf8.encode('1234567890' + mCreated + '21063597'));
-
+    Digest mOnvifDigest = sha1.convert(utf8.encode('1234567890' + mCreated + '21063598'));
     mPasswordDigest = base64Encode(mOnvifDigest.bytes);
-//    print(base64Encode(utf8.encode('a05e4b8113abb75e498f86e67e651d04927ae2ad')));
-     print(mCreated);
-     print(mNonce);
-     print(mPasswordDigest);
-//     print(base64Decode(onvifPass));
-//     print(digest.bytes);
-////    print('mCreated = $
-// mCreated, mNonce = $mNonce, mPassDigest = $mPasswordDigest');
-     onvifCreated = mCreated;
-     onvifNonce = mNonce;
-     onvifPass = mPasswordDigest;
-     officeGetSnapshotUriAuth = '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
+     mGetSnapshotUriAuth = '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
          'xmlns:c="http://www.w3.org/2003/05/soap-encoding" xmlns:v="http://www.w3.org/2003/05/soap-envelope">'
          '<v:Header><Action mustUnderstand="1" xmlns="http://www.w3.org/2005/08/addressing">http://www.onvif.org/ver10/media/wsdl/GetSnapshotUri</Action>'
          '<Security xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"><UsernameToken><Username>admin</Username>'
          '<Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">'
-         '$onvifPass</Password>'
+         '$mPasswordDigest</Password>'
          '<Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">'
-         '$onvifNonce</Nonce><Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">'
-         '$onvifCreated</Created></UsernameToken></Security></v:Header><v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
+         '$mNonce</Nonce><Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">'
+         '$mCreated</Created></UsernameToken></Security></v:Header><v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
          '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
   }
 
@@ -168,7 +146,7 @@ class _MyAppState extends State<MyApp> {
     var client = DigestAuthClient("admin", "123QWEasdZXC");
 //    var response1 = await client.post(url, headers: {"Content-Type":"text/xml"}, body: body4);
     _mGetSnapshotUriAuth();
-    var response1 = await http.post(url, headers: {"Content-Type":"text/xml"}, body: officeGetSnapshotUriAuth);
+    var response1 = await http.post(url, headers: {"Content-Type":"text/xml"}, body: mGetSnapshotUriAuth);
     setState(() {
       camerAnswer1 = (response1.body);
 
