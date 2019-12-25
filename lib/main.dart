@@ -1,8 +1,12 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_auth/http_auth.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:http_auth/http_auth.dart' as auth;
+import 'dart:math';
 void main() => runApp(MyApp());
 
 enum OnvifCommand {
@@ -31,6 +35,11 @@ class _MyAppState extends State<MyApp> {
   var url1 = "http://192.168.88.32:10080";
   var url2 = "http://192.168.88.15:8899";
   var url3 = "http://192.168.1.102:10080";
+  String mCreated;
+  String mNonce;
+  String mPasswordDigest;
+  String mNewHeader;
+  String getSnapshotUriAuth1;
 
   String soapHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
       "<soap:Envelope " +
@@ -97,16 +106,47 @@ class _MyAppState extends State<MyApp> {
       '<v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
       '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
 
-
-
-
   String envelopEnd = "</soap:Body></soap:Envelope>";
 
   @override
   void initState() {
     _httpRequest(url3);
+  // _mGetSnapshotUriAuth();
   }
 
+   _mGetSnapshotUriAuth(){
+    String username = 'admin';
+    mCreated = DateTime.now().toIso8601String().split('.')[0] + 'Z';
+    mNonce = base64Encode(utf8.encode('1234567890'));
+    String password = '123QWEasdZXC';
+    String onvifCreated = '2019-12-23T14:11:08Z';
+    String onvifNonce = 'MTYyYTRmMzExYjBhMDE3Nw==';
+    String onvifPass = '8mdx0yoK22pKuN2NggG945oJZdA=';
+
+
+
+    Digest mOnvifDigest = sha1.convert(utf8.encode(onvifCreated + onvifNonce + '123QWEasdZXC'));
+//    print(base64Encode(mOnvifDigest.bytes));
+//    var passBytes = utf8.encode(password);
+    Digest digest = sha1.convert(utf8.encode(onvifCreated + mNonce + password));
+    mPasswordDigest = base64Encode(digest.bytes);
+    print(mPasswordDigest);
+//    print('mCreated = $mCreated, mNonce = $mNonce, mPassDigest = $mPasswordDigest');
+    mNewHeader = '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
+        'xmlns:c="http://www.w3.org/2003/05/soap-encoding" xmlns:v="http://www.w3.org/2003/05/soap-envelope">'
+        '<v:Header><Action mustUnderstand="1" xmlns="http://www.w3.org/2005/08/addressing">http://www.onvif.org/ver10/media/wsdl/GetSnapshotUri</Action>'
+        '<Security xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">'
+        '<UsernameToken><Username>admin</Username>'
+        '<Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">'
+        '$onvifPass</Password>'
+        '<Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">'
+        '$onvifNonce</Nonce>'
+        '<Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">'
+        '$mPasswordDigest</Created></UsernameToken></Security></v:Header>'
+        '<v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
+        '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
+
+  }
 
   String _regexParser(String msg){
     RegExp regExp = RegExp(r".*<SOAP-ENV:Body>(.*)");
@@ -132,7 +172,8 @@ class _MyAppState extends State<MyApp> {
 
 
 //    var response1 = await client.post(url, headers: {"Content-Type":"text/xml"}, body: body4);
-    var response1 = await http.post(url, headers: {"Content-Type":"text/xml"}, body: getSnapshotUriAuth);
+    _mGetSnapshotUriAuth();
+    var response1 = await http.post(url, headers: {"Content-Type":"text/xml"}, body: mNewHeader);
     setState(() {
       camerAnswer1 = (response1.body);
 
