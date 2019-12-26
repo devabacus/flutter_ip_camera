@@ -212,11 +212,7 @@ class _MyAppState extends State<MyApp> {
         '<ProfileToken>PROFILE_000</ProfileToken><Protocol>RTSP</Protocol></GetStreamUri></v:Body></v:Envelope>';
   }
 
-  String _regexParser(String msg) {
-    RegExp regExp = RegExp(r".*<SOAP-ENV:Body>(.*)");
-    var parsedMsg = regExp.firstMatch(msg).group(1);
-    return parsedMsg;
-  }
+
 
 //  headers: {"content-Type": "text/xml; charset=utf-8"}
   _httpRequest(String url) async {
@@ -235,26 +231,57 @@ class _MyAppState extends State<MyApp> {
 //      print(resp.body);
 //      setState(() => camerAnswer1 = resp.bodyBytes);
 //    });
-//      final response = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
-      final response = await http.post('http://192.168.88.32:31122/snapshot.cgi', body: mGetSnapshotUriAuth);
-      print(response.statusCode);
-        setState(() => camerAnswer1 = response.body);
+      final responseStart = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
+    setState(() {
+      camerAnswer1 = responseStart.body;
+    });
+      print("before first request");
+
+
+//      final response = await http.post('http://192.168.88.32:31229/snapshot.cgi', body: mGetSnapshotUriAuth);
+      Future<http.Response> responseSnap = http.post('http://192.168.88.32:31229/snapshot.cgi', body: mGetSnapshotUriAuth);
+      responseSnap.then((response){
+                  print(response.statusCode);
+            String nonce = _regexParser(response.headers.toString(), r'.*nonce=(.*)op.*');
+            String opaque= _regexParser(response.headers.toString(), r'.*opaque=(.*)lgo.*');
+            String realm = "goAhead";
+            String qop = "auth";
+            String nc = "00000001";
+            String cnonce = "1234567890";
+            String username = "admin";
+            String password = "21063598";
+      //      String uri = "http://www.onvif.org/ver20/media/wsdl";
+            String uri = "/onvif/device_service";
+            print("nonce = $nonce");
+            print("opque = $opaque");
+            print(response.headers);
+      //        setState(() => camerAnswer1 = _regexParser(response.headers.toString()));
+            Digest digest1 = md5.convert(utf8.encode("$username:$realm:$password"));
+            Digest digest2 = md5.convert(utf8.encode("POST:$uri"));
+            var _response = md5.convert(utf8.encode("$digest1:$nonce:$nc:$cnonce:$qop:$digest2"));
+            var mResponse = "Digest username=\"$username\", realm=\"$realm\", nonce=\"$nonce\", uri=\"$uri\", response=\"$_response\", cnonce=\"$cnonce\", nc=$nc, qop=\"$qop\"";
+            print(mResponse);
+            print("before second request");
+            Future<http.Response> new_response = http.post('http://192.168.88.32:31229/snapshot.cgi', headers: {"Content-Type":"text/xml; charset=utf-8", "Authorization": mResponse }, body: mGetSnapshotUriAuth);
+             new_response.then((lastResp){
+               print(lastResp.statusCode);
+             });
+            print("ivan");
+      });
+      print("after first request");
+
+
+//      final newResponse = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
 //    _downloadFile(newUrlOtherCam, otherOfficeCamera);
-//    test.then((mTest){
-//      print('hello');
-//    });
-
-
-//    Directory appDocDir = await getExternalStorageDirectory();
-//    String appDocPath = appDocDir.path;
-//    print(appDocPath);
-////    setState(() {
-//      //image = Image.file(file);
-//      file = mfile;
-//    });
-//    print(file.path);
 
   }
+
+  String _regexParser(String msg, String pattern) {
+    RegExp regExp = RegExp(pattern);
+    String parsedMsg = regExp.firstMatch(msg)?.group(1);
+    return parsedMsg.substring(1, parsedMsg.length-3);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +303,12 @@ class _MyAppState extends State<MyApp> {
           child: Text(imagePath??''),
         ),
         RaisedButton(
-          onPressed: () => _httpRequest(url1),
+          onPressed: () {
+            setState(() {
+              camerAnswer1 = '';
+            });
+            _httpRequest(url1);
+          } ,
           child: Text("send request"),
         )
       ]),
