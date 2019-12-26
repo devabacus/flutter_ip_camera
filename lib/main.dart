@@ -1,5 +1,6 @@
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:image_downloader/image_downloader.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -25,6 +26,7 @@ class _MyAppState extends State<MyApp> {
   String user = "admin";
   bool gotUrl = false;
   OnvifCommand state;
+  var cameraRequest;
   var camerAnswer1;
   var camerAnswer2;
   var camerAnswer3;
@@ -39,6 +41,9 @@ class _MyAppState extends State<MyApp> {
   String mNewHeader;
   String getSnapshotUriAuth1;
   bool isAuth = false;
+  Widget image;
+  File file;
+  Image camImage;
 
   String soapHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
       "<soap:Envelope " +
@@ -65,7 +70,8 @@ class _MyAppState extends State<MyApp> {
   String snapshotUri =
       "<GetSnapshotUri xmlns=\"http://www.onvif.org/ver20/media/wsdl\">" +
           "<ProfileToken>" +
-          "PROFILE_000" +
+//          "PROFILE_000" +
+          "001" +
           "</ProfileToken>" +
           "</GetSnapshotUri>";
 
@@ -94,6 +100,7 @@ class _MyAppState extends State<MyApp> {
 
   String mGetSnapshotUriAuth;
   String mGetStreamUriAuth;
+  String mGetSnapshotUriAuth1;
 
   String otherOfficeCamera =
       '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
@@ -105,8 +112,45 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    _httpRequest(url3);
+    _httpRequest(url1);
     // _mGetSnapshotUriAuth();
+  }
+
+  _image_dowlowder(var url) async {
+    try {
+      var imageId = await ImageDownloader.downloadImage(url);
+      if (imageId == null) {
+        return;
+      }
+
+      // Below is a method of obtaining saved image information.
+      var fileName = await ImageDownloader.findName(imageId);
+      var path = await ImageDownloader.findPath(imageId);
+      var size = await ImageDownloader.findByteSize(imageId);
+      var mimeType = await ImageDownloader.findMimeType(imageId);
+      print(fileName);
+      print(path);
+      print(size);
+      print(mimeType);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _downloadFile(String url, String param) async {
+//    File file;
+    final response = await http.post(
+      url,
+      body: param,
+    );
+
+    print('ivan again');
+    File _file = new File('imageFromOfficeCamera.jpg');
+
+    await _file.writeAsBytes(response.bodyBytes);
+    setState(() {
+      camImage = Image.file(_file);
+    });
   }
 
   _mGetSnapshotUriAuth() {
@@ -129,9 +173,15 @@ class _MyAppState extends State<MyApp> {
         '$mCreated</Created></UsernameToken></Security></v:Header><v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
         '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
 
+    mGetSnapshotUriAuth1 =
+        '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
+        'xmlns:c="http://www.w3.org/2003/05/soap-encoding" xmlns:v="http://www.w3.org/2003/05/soap-envelope">'
+        '<v:Header><Action mustUnderstand="1" xmlns="http://www.w3.org/2005/08/addressing">http://www.onvif.org/ver10/media/wsdl/GetSnapshotUri</Action>'
+        '<v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
+        '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
 
     mGetStreamUriAuth =
-    '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
+        '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
         'xmlns:c="http://www.w3.org/2003/05/soap-encoding" xmlns:v="http://www.w3.org/2003/05/soap-envelope">'
         '<v:Header><Action mustUnderstand="1" xmlns="http://www.w3.org/2005/08/addressing">http://www.onvif.org/ver10/media/wsdl/GetSnapshotUri</Action>'
         '<Security xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"><UsernameToken><Username>admin</Username>'
@@ -151,38 +201,32 @@ class _MyAppState extends State<MyApp> {
 
 //  headers: {"content-Type": "text/xml; charset=utf-8"}
   _httpRequest(String url) async {
-    String body1 = soapHeader + servicesCommand + envelopEnd;
-    String body2 = soapHeader + getSystemDateAndTime + envelopEnd;
-    String body3 = soapHeader + profileCommand + envelopEnd;
-    String body4 = soapHeader + snapshotUri + envelopEnd;
-    String body5 = soapHeader + streamUri + envelopEnd;
     _mGetSnapshotUriAuth();
-    var response1 = await http.post(url,
-        headers: {"Content-Type": "text/xml"}, body: mGetStreamUriAuth);
+//    final response = await http.post(url, body: mGetSnapshotUriAuth);
+//    var response;
+//      Future<http.Response> response = http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
+    var newUrlOtherCam =
+        'http://192.168.88.15/webcapture.jpg?command=snap&channel=1&user=admin&password=wgEnjUi4';
+//        'https://www.tenso-m.ru/f/catalog/products/336/1112-378x378.jpg';
 
-    setState(() {
-      camerAnswer1 = (response1.body);
-      isAuth = true;
+//      Future<http.Response> response = http.post(url2, body: otherOfficeCamera);
+    Future<http.Response> response =
+        http.post(newUrlOtherCam, body: otherOfficeCamera);
+    response.then((resp) {
+      print(resp.body);
+      setState(() => camerAnswer1 = resp.bodyBytes);
     });
+//      response = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
+//    File file = await _downloadFile('http://192.168.88.32:31122/snapshot.cgi', mGetSnapshotUriAuth);
+//    File mfile = await _downloadFile(newUrlOtherCam, otherOfficeCamera);
+//    _downloadFile(newUrlOtherCam, otherOfficeCamera);
 
-//    var response10 = await http.get('http://192.168.1.102:23203/snapshot.cgi');
-//    print(response10.statusCode);
-
-//    var imageId = await ImageDownloader.downloadImage(
-//        'http://192.168.1.102:13237/snapshot.cgi?user=admin&pwd=21063598&res=0');
-////    http://192.168.1.102:23203/snapshot.cgi?user=admin&pwd=123QWEasdZXC&res=0
-////    'https://www.tenso-m.ru/f/catalog/products/22/979.jpg');
-//    if (imageId == null) {
-//      return;
-//    }
-//    var fileName = await ImageDownloader.findName(imageId);
-//    var path = await ImageDownloader.findPath(imageId);
-//    var size = await ImageDownloader.findByteSize(imageId);
-//    var mimeType = await ImageDownloader.findMimeType(imageId);
-//    print(fileName);
-//    print(path);
-//    print(size);
-//    print(mimeType);
+//    setState(() {
+//      //image = Image.file(file);
+//      file = mfile;
+//    });
+//    print(file.path);
+//    setState(() => camerAnswer1 = response.statusCode);
   }
 
   @override
@@ -190,36 +234,34 @@ class _MyAppState extends State<MyApp> {
 //    _httpRequest();
 
     return MaterialApp(
-      home: Scaffold(
-          appBar: AppBar(
-            title: Text("Ip camera"),
-          ),
-//        body: SingleChildScrollView(child: Text(camerAnswer.toString())),
-          body:
-//          CachedNetworkImage(
-//            imageUrl: "https://www.tenso-m.ru/f/catalog/products/22/979.jpg",
-//            placeholder: (context, url) => CircularProgressIndicator(),
-//            errorWidget: (context, url, error) => Icon(Icons.error),
-//          ),
-
+        home: Scaffold(
+      appBar: AppBar(
+        title: Text("Ip camera"),
+      ),
+      body: ListView(children: <Widget>[
+        camerAnswer1 != null?Image.memory(camerAnswer1):Container(),
+        RaisedButton(
+          onPressed: () => _httpRequest(url1),
+          child: Text("get snapshot"),
+        )
+      ]),
+//            body: camImage == null
+//                ? Container(
+//                    width: 400,
+//                    height: 400,
+//                    color: Colors.brown,
+//                  )
+//                : Container(
+//                    width: 400,
+//                    height: 400,
+//                    child: camImage,
+//                  )
 //      ListView(children: <Widget>[
-//              Container(
-//                  width: 400,
-//                  height: 400,
-//                  child: isAuth
-//                      ? Image.network(
-//                          'http://192.168.1.102:13237/snapshot.cgi')
-////                          'http://192.168.1.102:13237/snapshot.cgi?user=admin&pwd=21063598&res=0')
-////                          'https://www.tenso-m.ru/f/catalog/products/22/979.jpg')
-//                      : Container(
-//                          width: 400,
-//                          height: 400,
-//                          color: Colors.lightBlue,
-//                        ))
-        SelectableText(camerAnswer1.toString()),
-//        NetworkImage('http://192.168.1.102:23203/snapshot.cgi?user=admin&pwd=123QWEasdZXC&res=0')
+//        SelectableText(cameraRequest??''),
+//        SizedBox(height: 50,),
+//        SelectableText(camerAnswer1.toString()),
 //      ],),
-          ),
-    );
+//          ),
+    ));
   }
 }
