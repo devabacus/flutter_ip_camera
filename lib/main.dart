@@ -235,10 +235,11 @@ class _MyAppState extends State<MyApp> {
 //      print(resp.body);
 //      setState(() => camerAnswer1 = resp.bodyBytes);
 //    });
-//      response = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
-//    File file = await _downloadFile('http://192.168.88.32:31122/snapshot.cgi', mGetSnapshotUriAuth);
-//      File mfile = await _downloadFile(newUrlOtherCam, otherOfficeCamera);
-    _downloadFile(newUrlOtherCam, otherOfficeCamera);
+//      final response = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
+      final response = await http.post('http://192.168.88.32:31122/snapshot.cgi', body: mGetSnapshotUriAuth);
+      print(response.statusCode);
+        setState(() => camerAnswer1 = response.body);
+//    _downloadFile(newUrlOtherCam, otherOfficeCamera);
 //    test.then((mTest){
 //      print('hello');
 //    });
@@ -252,7 +253,7 @@ class _MyAppState extends State<MyApp> {
 //      file = mfile;
 //    });
 //    print(file.path);
-//    setState(() => camerAnswer1 = response.statusCode);
+
   }
 
   @override
@@ -265,14 +266,18 @@ class _MyAppState extends State<MyApp> {
         title: Text("Ip camera"),
       ),
       body: ListView(children: <Widget>[
-        camerAnswer1 != null?Image.memory(camerAnswer1):Container(child:CircularProgressIndicator(), width: 50, height: 50,),
+//        camerAnswer1 != null?Image.memory(camerAnswer1):Container(),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(camerAnswer1.toString()),
+        ),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(imagePath??''),
         ),
         RaisedButton(
           onPressed: () => _httpRequest(url1),
-          child: Text("get snapshot"),
+          child: Text("send request"),
         )
       ]),
 //            body: camImage == null
