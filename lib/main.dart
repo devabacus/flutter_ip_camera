@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_auth/http_auth.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(MyApp());
 
@@ -44,6 +45,7 @@ class _MyAppState extends State<MyApp> {
   Widget image;
   File file;
   Image camImage;
+  String imagePath;
 
   String soapHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
       "<soap:Envelope " +
@@ -137,20 +139,37 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+
+  _saveImageFromCam(List<int> urlImage) async {
+    final output = await getExternalStorageDirectory(); // use the [path_provider (https://pub.dartlang.org/packages/path_provider) library:
+
+    final file = File("${output.path}/camSnapshot.jpg");
+    await file.writeAsBytes(urlImage);
+    print(file.path);
+    setState(() {
+      camerAnswer1 = urlImage;
+      imagePath = file.path;
+    });
+
+  }
+
   Future<void> _downloadFile(String url, String param) async {
 //    File file;
+
     final response = await http.post(
       url,
       body: param,
     );
 
-    print('ivan again');
-    File _file = new File('imageFromOfficeCamera.jpg');
+    _saveImageFromCam(response.bodyBytes);
 
-    await _file.writeAsBytes(response.bodyBytes);
-    setState(() {
-      camImage = Image.file(_file);
-    });
+    //print('ivan again');
+//    File _file = new File('imageFromOfficeCamera.jpg');
+//
+//    await _file.writeAsBytes(response.bodyBytes);
+//    setState(() {
+//      camImage = Image.file(_file);
+//    });
   }
 
   _mGetSnapshotUriAuth() {
@@ -210,18 +229,25 @@ class _MyAppState extends State<MyApp> {
 //        'https://www.tenso-m.ru/f/catalog/products/336/1112-378x378.jpg';
 
 //      Future<http.Response> response = http.post(url2, body: otherOfficeCamera);
-    Future<http.Response> response =
-        http.post(newUrlOtherCam, body: otherOfficeCamera);
-    response.then((resp) {
-      print(resp.body);
-      setState(() => camerAnswer1 = resp.bodyBytes);
-    });
+//    Future<http.Response> response =
+//        http.post(newUrlOtherCam, body: otherOfficeCamera);
+//    response.then((resp) {
+//      print(resp.body);
+//      setState(() => camerAnswer1 = resp.bodyBytes);
+//    });
 //      response = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
 //    File file = await _downloadFile('http://192.168.88.32:31122/snapshot.cgi', mGetSnapshotUriAuth);
-//    File mfile = await _downloadFile(newUrlOtherCam, otherOfficeCamera);
-//    _downloadFile(newUrlOtherCam, otherOfficeCamera);
+//      File mfile = await _downloadFile(newUrlOtherCam, otherOfficeCamera);
+    _downloadFile(newUrlOtherCam, otherOfficeCamera);
+//    test.then((mTest){
+//      print('hello');
+//    });
 
-//    setState(() {
+
+//    Directory appDocDir = await getExternalStorageDirectory();
+//    String appDocPath = appDocDir.path;
+//    print(appDocPath);
+////    setState(() {
 //      //image = Image.file(file);
 //      file = mfile;
 //    });
@@ -239,7 +265,11 @@ class _MyAppState extends State<MyApp> {
         title: Text("Ip camera"),
       ),
       body: ListView(children: <Widget>[
-        camerAnswer1 != null?Image.memory(camerAnswer1):Container(),
+        camerAnswer1 != null?Image.memory(camerAnswer1):Container(child:CircularProgressIndicator(), width: 50, height: 50,),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(imagePath??''),
+        ),
         RaisedButton(
           onPressed: () => _httpRequest(url1),
           child: Text("get snapshot"),
