@@ -93,6 +93,7 @@ class _MyAppState extends State<MyApp> {
       '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
 
   String mGetSnapshotUriAuth;
+  String mGetStreamUriAuth;
 
   String otherOfficeCamera =
       '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
@@ -127,6 +128,19 @@ class _MyAppState extends State<MyApp> {
         '$mNonce</Nonce><Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">'
         '$mCreated</Created></UsernameToken></Security></v:Header><v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
         '<ProfileToken>PROFILE_000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
+
+
+    mGetStreamUriAuth =
+    '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
+        'xmlns:c="http://www.w3.org/2003/05/soap-encoding" xmlns:v="http://www.w3.org/2003/05/soap-envelope">'
+        '<v:Header><Action mustUnderstand="1" xmlns="http://www.w3.org/2005/08/addressing">http://www.onvif.org/ver10/media/wsdl/GetSnapshotUri</Action>'
+        '<Security xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"><UsernameToken><Username>admin</Username>'
+        '<Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">'
+        '$mPasswordDigest</Password>'
+        '<Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">'
+        '$mNonce</Nonce><Created xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">'
+        '$mCreated</Created></UsernameToken></Security></v:Header><v:Body><GetStreamUri xmlns="http://www.onvif.org/ver10/media/wsdl">'
+        '<ProfileToken>PROFILE_000</ProfileToken><Protocol>RTSP</Protocol></GetStreamUri></v:Body></v:Envelope>';
   }
 
   String _regexParser(String msg) {
@@ -144,7 +158,7 @@ class _MyAppState extends State<MyApp> {
     String body5 = soapHeader + streamUri + envelopEnd;
     _mGetSnapshotUriAuth();
     var response1 = await http.post(url,
-        headers: {"Content-Type": "text/xml"}, body: mGetSnapshotUriAuth);
+        headers: {"Content-Type": "text/xml"}, body: mGetStreamUriAuth);
 
     setState(() {
       camerAnswer1 = (response1.body);
@@ -182,21 +196,27 @@ class _MyAppState extends State<MyApp> {
           ),
 //        body: SingleChildScrollView(child: Text(camerAnswer.toString())),
           body:
+//          CachedNetworkImage(
+//            imageUrl: "https://www.tenso-m.ru/f/catalog/products/22/979.jpg",
+//            placeholder: (context, url) => CircularProgressIndicator(),
+//            errorWidget: (context, url, error) => Icon(Icons.error),
+//          ),
+
 //      ListView(children: <Widget>[
-              Container(
-                  width: 400,
-                  height: 400,
-                  child: isAuth
-                      ? Image.network(
-//                          'http://192.168.1.102:23203/snapshot.cgi')
-//                          'http://192.168.1.102:23203/snapshot.cgi?user=admin&pwd=21063598&res=0')
-                          'https://www.tenso-m.ru/f/catalog/products/22/979.jpg')
-                      : Container(
-                          width: 400,
-                          height: 400,
-                          color: Colors.lightBlue,
-                        ))
-//        SelectableText(camerAnswer1.toString()),
+//              Container(
+//                  width: 400,
+//                  height: 400,
+//                  child: isAuth
+//                      ? Image.network(
+//                          'http://192.168.1.102:13237/snapshot.cgi')
+////                          'http://192.168.1.102:13237/snapshot.cgi?user=admin&pwd=21063598&res=0')
+////                          'https://www.tenso-m.ru/f/catalog/products/22/979.jpg')
+//                      : Container(
+//                          width: 400,
+//                          height: 400,
+//                          color: Colors.lightBlue,
+//                        ))
+        SelectableText(camerAnswer1.toString()),
 //        NetworkImage('http://192.168.1.102:23203/snapshot.cgi?user=admin&pwd=123QWEasdZXC&res=0')
 //      ],),
           ),
