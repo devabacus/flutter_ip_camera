@@ -153,11 +153,12 @@ class _MyAppState extends State<MyApp> {
 
   }
 
-  Future<void> _downloadFile(String url, String param) async {
+  Future<void> _downloadFile(String url, var header, String param) async {
 //    File file;
 
     final response = await http.post(
       url,
+      headers: header,
       body: param,
     );
 
@@ -178,7 +179,7 @@ class _MyAppState extends State<MyApp> {
     mNonce = base64Encode(utf8.encode("1234567890"));
     String password = '123QWEasdZXC';
     Digest mOnvifDigest =
-        sha1.convert(utf8.encode('1234567890' + mCreated + '21063598'));
+        sha1.convert(utf8.encode('1234567890' + mCreated + '123QWEasdZXC'));
     mPasswordDigest = base64Encode(mOnvifDigest.bytes);
     mGetSnapshotUriAuth =
         '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
@@ -234,14 +235,17 @@ class _MyAppState extends State<MyApp> {
       final responseStart = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
     setState(() {
       camerAnswer1 = responseStart.body;
+      camerAnswer1 = "${responseStart.statusCode} ${_regexParser(responseStart.body, r'.*<s:Body>(.*)</s:Body>')}";
     });
       print("before first request");
 
-
+      String url2 = 'http://192.168.88.32:14386/snapshot1.cgi';
 //      final response = await http.post('http://192.168.88.32:31229/snapshot.cgi', body: mGetSnapshotUriAuth);
-      Future<http.Response> responseSnap = http.post('http://192.168.88.32:31229/snapshot.cgi', body: mGetSnapshotUriAuth);
-      responseSnap.then((response){
+      http.Response response = await http.post(url2, body: mGetSnapshotUriAuth);
                   print(response.statusCode);
+    setState(() {
+      camerAnswer2 = "${response.statusCode} \n${response.headers}\n \n${response.body}";
+    });
             String nonce = _regexParser(response.headers.toString(), r'.*nonce=(.*)op.*');
             String opaque= _regexParser(response.headers.toString(), r'.*opaque=(.*)lgo.*');
             String realm = "goAhead";
@@ -249,29 +253,30 @@ class _MyAppState extends State<MyApp> {
             String nc = "00000001";
             String cnonce = "1234567890";
             String username = "admin";
-            String password = "21063598";
-      //      String uri = "http://www.onvif.org/ver20/media/wsdl";
+            String password = "123QWEasdZXC";
             String uri = "/onvif/device_service";
             print("nonce = $nonce");
-            print("opque = $opaque");
+            print("opaque = $opaque");
             print(response.headers);
       //        setState(() => camerAnswer1 = _regexParser(response.headers.toString()));
             Digest digest1 = md5.convert(utf8.encode("$username:$realm:$password"));
             Digest digest2 = md5.convert(utf8.encode("POST:$uri"));
             var _response = md5.convert(utf8.encode("$digest1:$nonce:$nc:$cnonce:$qop:$digest2"));
-            var mResponse = "Digest username=\"$username\", realm=\"$realm\", nonce=\"$nonce\", uri=\"$uri\", response=\"$_response\", cnonce=\"$cnonce\", nc=$nc, qop=\"$qop\"";
+            var mResponse = "Digest username=\"$username\", realm=\"$realm\", nonce=\"$nonce\", uri=\"$uri\",  qop=$qop, nc=$nc, cnonce=\"$cnonce\", response=\"$_response\"";
             print(mResponse);
-            print("before second request");
-            Future<http.Response> new_response = http.post('http://192.168.88.32:31229/snapshot.cgi', headers: {"Content-Type":"text/xml; charset=utf-8", "Authorization": mResponse }, body: mGetSnapshotUriAuth);
-             new_response.then((lastResp){
-               print(lastResp.statusCode);
-             });
-            print("ivan");
-      });
-      print("after first request");
-
-
-//      final newResponse = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
+            var mHeaders = {"Content-Type":"text/html", "Authorization": mResponse};
+            var mHeaders1 = {HttpHeaders.authorizationHeader:mResponse};
+//            _downloadFile(url2, mHeaders, mGetSnapshotUriAuth);
+            http.Response response3 = await http.post(url2, headers: {"Content-Type":"text/html", "Authorization": mResponse}, body: mGetSnapshotUriAuth);
+            print(response3.statusCode);
+            print(response3.body);
+    setState(() {
+      camerAnswer3 = "${response3.statusCode} \n${response3.headers}\n \n${response3.body}";
+    });
+//            http.Response response3 = await http.get(url2, headers: {"Content-Type":"text/html", "Authorization": mResponse});
+            //Если меняем "Authorization" ================ломается
+//            print(response3.body);
+//    final newResponse = await http.post('http://192.168.88.32:10080', body: mGetSnapshotUriAuth);
 //    _downloadFile(newUrlOtherCam, otherOfficeCamera);
 
   }
@@ -294,9 +299,26 @@ class _MyAppState extends State<MyApp> {
       ),
       body: ListView(children: <Widget>[
 //        camerAnswer1 != null?Image.memory(camerAnswer1):Container(),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(camerAnswer1.toString()),
+        Container(
+          color: Colors.cyanAccent,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(camerAnswer1.toString()),
+          ),
+        ),
+        Container(
+          color: Colors.lightBlueAccent,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(camerAnswer2.toString()),
+          ),
+        ),
+        Container(
+          color: Colors.amber,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(camerAnswer3.toString()),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
@@ -307,7 +329,7 @@ class _MyAppState extends State<MyApp> {
             setState(() {
               camerAnswer1 = '';
             });
-            _httpRequest(url1);
+            _httpRequest(url2);
           } ,
           child: Text("send request"),
         )
