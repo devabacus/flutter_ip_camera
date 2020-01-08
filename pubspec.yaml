@@ -30,6 +30,8 @@ dependencies:
   convert: ^2.1.1
   image_downloader: ^0.19.1
   path_provider: ^1.5.1
+  flutter_html: ^0.11.1
+  gplayer: ^0.0.2
 
 dev_dependencies:
   flutter_test:
