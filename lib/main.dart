@@ -38,6 +38,7 @@ class _MyAppState extends State<MyApp> {
   var url1 = "http://192.168.88.32:10080";
   var url2 = "http://192.168.88.15:8899";
   var url3 = "http://192.168.1.102:10080";
+  var url4 = "http://192.168.0.104:8080";
   String mCreated;
   String mNonce;
   String mPasswordDigest;
@@ -119,13 +120,13 @@ class _MyAppState extends State<MyApp> {
       '<v:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:d="http://www.w3.org/2001/XMLSchema" '
       'xmlns:c="http://www.w3.org/2003/05/soap-encoding" xmlns:v="http://www.w3.org/2003/05/soap-envelope">'
       '<v:Header><Action mustUnderstand="1" xmlns="http://www.w3.org/2005/08/addressing">http://www.onvif.org/ver10/media/wsdl/GetSnapshotUri</Action>'
-      '</v:Header><v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl"><ProfileToken>000</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
+      '</v:Header><v:Body><GetSnapshotUri xmlns="http://www.onvif.org/ver10/media/wsdl"><ProfileToken>VideoIPCamera</ProfileToken></GetSnapshotUri></v:Body></v:Envelope>';
 
   String envelopEnd = "</soap:Body></soap:Envelope>";
 
   @override
   void initState() {
-    _httpRequest(url2);
+    _httpRequest(url4);
     // _mGetSnapshotUriAuth();
   }
 
@@ -176,7 +177,7 @@ class _MyAppState extends State<MyApp> {
     //print('ivan again');
 //    File _file = new File('imageFromOfficeCamera.jpg');
 //
-//    await _file.writeAsBytes(response.bodyBytes);
+//    await _file.writeAsByt`es(response.bodyBytes);
 //    setState(() {
 //      camImage = Image.file(_file);
 //    });
@@ -235,15 +236,15 @@ class _MyAppState extends State<MyApp> {
         'http://192.168.88.15/webcapture.jpg?command=snap&channel=1&user=admin&password=wgEnjUi4';
 //        'https://www.tenso-m.ru/f/catalog/products/336/1112-378x378.jpg';
 
-//      Future<http.Response> response = http.post(url2, body: otherOfficeCamera);
+      Future<http.Response> response = http.post(url4, body: otherOfficeCamera);
 //    Future<http.Response> response =
 //        http.post(newUrlOtherCam, body: otherOfficeCamera);
-    _downloadFile(newUrlOtherCam, otherOfficeCamera);
+//    _downloadFile(newUrlOtherCam, otherOfficeCamera);
 //    _saveImageFromCam(newUrlOtherCam)
-//    response.then((resp) {
-//      print(resp.body);
-//      setState(() => camerAnswer1 = resp.body);
-//    });
+    response.then((resp) {
+      print(resp.body);
+      setState(() => camerAnswer1 = resp.body);
+    });
 //      final responseStart = await http.post('http://192.168.88.32:10080', body: mGetStreamUriAuth);
 
 //    setState(() {
@@ -308,23 +309,25 @@ class _MyAppState extends State<MyApp> {
       appBar: AppBar(
         title: Text("Ip camera"),
       ),
-      body: ListView(children: <Widget>[
-        camerAnswer1 != null
-            ? Image.memory(camerAnswer1)
-            : Container(
-                child: CircularProgressIndicator(),
-                width: 50,
-                height: 50,
-              ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(imagePath ?? ''),
-        ),
-        RaisedButton(
-          onPressed: () => _httpRequest(url1),
-          child: Text("get snapshot"),
-        )
-      ]),
+      body:
+       SingleChildScrollView(child: SelectableText(camerAnswer1??""))
+//      ListView(children: <Widget>[
+//        camerAnswer1 != null
+//            ? Image.memory(camerAnswer1)
+//            : Container(
+//                child: CircularProgressIndicator(),
+//                width: 50,
+//                height: 50,
+//              ),
+//        Padding(
+//          padding: const EdgeInsets.all(8.0),
+//          child: Text(imagePath ?? ''),
+//        ),
+//        RaisedButton(
+//          onPressed: () => _httpRequest(url1),
+//          child: Text("get snapshot"),
+//        )
+//      ]),
     ));
   }
 }
